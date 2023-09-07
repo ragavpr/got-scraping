@@ -1,6 +1,7 @@
 import { URL } from 'node:url';
 import http2 from 'http2-wrapper';
 import { jest } from '@jest/globals';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import {
     HttpsProxyAgent,
     HttpRegularProxyAgent,
@@ -53,7 +54,7 @@ describe('Proxy', () => {
 
         await expect(proxyHook(options))
             .rejects
-            .toThrow(/is not supported. Please use HTTP or HTTPS./);
+            .toThrow(/is not supported/);
     });
 
     describe('agents', () => {
@@ -161,6 +162,39 @@ describe('Proxy', () => {
 
             const { agent } = options;
             expect(agent.http2).toBeInstanceOf(Http2OverHttp2);
+        });
+
+        test('should support http request over socks proxy', async () => {
+            options.context.proxyUrl = 'socks://localhost:8080';
+            jest.spyOn(http2.auto, 'resolveProtocol').mockResolvedValue({ alpnProtocol: 'http/1.1' });
+
+            await proxyHook(options);
+
+            const { agent } = options;
+            expect(agent.http).toBeInstanceOf(TransformHeadersAgent);
+            expect((agent.http as any).agent).toBeInstanceOf(SocksProxyAgent);
+        });
+
+        test('should support https request over socks proxy', async () => {
+            options.context.proxyUrl = 'socks://localhost:8080';
+            jest.spyOn(http2.auto, 'resolveProtocol').mockResolvedValue({ alpnProtocol: 'http/1.1' });
+
+            await proxyHook(options);
+
+            const { agent } = options;
+            expect(agent.http).toBeInstanceOf(TransformHeadersAgent);
+            expect((agent.http as any).agent).toBeInstanceOf(SocksProxyAgent);
+        });
+
+        test('should support http2 request over socks proxy', async () => {
+            options.context.proxyUrl = 'socks://localhost:8080';
+            jest.spyOn(http2.auto, 'resolveProtocol').mockResolvedValue({ alpnProtocol: 'h2' });
+
+            await proxyHook(options);
+
+            const { agent } = options;
+            expect(agent.http).toBeInstanceOf(TransformHeadersAgent);
+            expect((agent.http as any).agent).toBeInstanceOf(SocksProxyAgent);
         });
     });
 });

@@ -5,12 +5,12 @@ import { isIPv6 } from 'node:net';
 import tls, { type ConnectionOptions } from 'node:tls';
 import { URL } from 'node:url';
 
-interface AgentOptions extends http.AgentOptions {
+export interface AgentOptions extends http.AgentOptions {
     proxy: string | URL;
     disableConnect?: boolean;
 }
 
-const initialize = (self: http.Agent & { proxy: URL }, options: AgentOptions) => {
+export const initialize = (self: { proxy: URL }, options: AgentOptions) => {
     self.proxy = typeof options.proxy === 'string' ? new URL(options.proxy) : options.proxy;
 };
 

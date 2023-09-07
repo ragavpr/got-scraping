@@ -2,6 +2,7 @@ import { Options, type Agents } from 'got';
 import http2, { auto } from 'http2-wrapper';
 import { URL } from 'node:url';
 import { HttpProxyAgent, HttpRegularProxyAgent, HttpsProxyAgent } from '../agent/h1-proxy-agent.js';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 import { TransformHeadersAgent } from '../agent/transform-headers-agent.js';
 
 const {
@@ -27,10 +28,10 @@ export async function proxyHook(options: Options): Promise<void> {
 export class ProxyError extends Error {}
 
 function validateProxyProtocol(protocol: string) {
-    const isSupported = protocol === 'http:' || protocol === 'https:';
+    const isSupported = protocol === 'http:' || protocol === 'https:' || protocol.startsWith('socks');
 
     if (!isSupported) {
-        throw new ProxyError(`Proxy URL protocol "${protocol}" is not supported. Please use HTTP or HTTPS.`);
+        throw new ProxyError(`Proxy URL protocol "${protocol}" is not supported. Please use HTTP, HTTPS or SOCKS family.`);
     }
 }
 
@@ -94,12 +95,21 @@ async function getAgents(parsedProxyUrl: URL, rejectUnauthorized: boolean) {
                 http2: new Http2OverHttps(wrapperOptions),
             };
         }
-    } else {
+    } else if (parsedProxyUrl.protocol === 'http:') {
         // Upstream proxies hang up connections on CONNECT + unsecure HTTP
         agent = {
             http: new TransformHeadersAgent(new HttpRegularProxyAgent(nativeOptions)),
             https: new TransformHeadersAgent(new HttpsProxyAgent(nativeOptions)),
             http2: new Http2OverHttp(wrapperOptions),
+        };
+    } else {
+        agent = {
+            http: new TransformHeadersAgent(new SocksProxyAgent(nativeOptions.proxy, {
+                maxFreeSockets: nativeOptions.maxFreeSockets,
+            })),
+            https: new TransformHeadersAgent(new SocksProxyAgent(nativeOptions.proxy, {
+                maxFreeSockets: nativeOptions.maxFreeSockets,
+            })),
         };
     }
 
