@@ -2,9 +2,9 @@ import { Options, type Agents } from 'got';
 import http2, { auto } from 'http2-wrapper';
 import { URL } from 'node:url';
 import { HttpProxyAgent, HttpRegularProxyAgent, HttpsProxyAgent } from '../agent/h1-proxy-agent.js';
-import { SocksHttp2Agent } from '../agent/socks/socks-http2-agent';
-import { HttpSocksAgent } from '../agent/socks/http-socks-agent';
-import { HttpsSocksAgent } from '../agent/socks/https-socks-agent';
+import { SocksHttp2Agent } from '../agent/socks/socks-http2-agent.js';
+import { HttpSocksAgent } from '../agent/socks/http-socks-agent.js';
+import { HttpsSocksAgent } from '../agent/socks/https-socks-agent.js';
 import { TransformHeadersAgent } from '../agent/transform-headers-agent.js';
 
 const {
